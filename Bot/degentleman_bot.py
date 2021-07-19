@@ -4,8 +4,14 @@ from discord.ext import commands
 from pathlib import Path
 from io import BytesIO
 import random, discord, secrets
-import checks, frog
-# import os
+import checks, frog, admin
+import logging
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 TOKEN = dotenv_values('.env')['TOKEN']
 OKA = dotenv_values('.env')['OKA_DISCRIMINATOR']
@@ -57,27 +63,31 @@ async def qrd(ctx, msg):
         response = random.choice(responses)
         await ctx.send(f'Quick Run Down on {msg}: {msg} {response}')
 
-@bot.event
-async def on_command_error(ctx, error):
-    await ctx.send(f'Something broke, error message: {error}')
-
 def is_oka(discriminator):
     return discriminator == OKA
 
 
 
+# @bot.command()
+# @checks.is_command_for((PREFIXES['frog']))
+# @commands.cooldown(1, 30, commands.BucketType.default)
+# async def apu(ctx):
+#     response = frog.get_random_apu()
+#     buffer = BytesIO(response.content)
+#     extension = response.headers['Content-Type'].split('/')[-1]
+#     random_token = secrets.token_urlsafe(16)
+#     filename = '.'.join([random_token, extension])
+#     img_file = discord.File(filename=filename, fp=buffer)
+
+#     await ctx.send(content='', file=img_file,)
+
 @bot.command()
-@checks.is_command_for((PREFIXES['frog']))
-@commands.cooldown(1, 30, commands.BucketType.default)
-async def apu(ctx):
-    response = frog.get_random_apu()
-    buffer = BytesIO(response.content)
-    extension = response.headers['Content-Type'].split('/')[-1]
-    random_token = secrets.token_urlsafe(16)
-    filename = '.'.join([random_token, extension])
-    img_file = discord.File(filename=filename, fp=buffer)
-
-    await ctx.send(content='', file=img_file,)
+@checks.is_owner()
+async def me(ctx):
+    await ctx.send(f'You: {ctx.message.author.id}')
 
 
+
+bot.add_cog(admin.Admin(bot))
+bot.add_cog(frog.Frog(bot))
 bot.run(TOKEN)
