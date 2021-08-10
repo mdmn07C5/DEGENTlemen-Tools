@@ -1,11 +1,15 @@
-# import dotenv
-from dotenv import dotenv_values
-from discord.ext import commands
-from pathlib import Path
-from io import BytesIO
-import random, discord, secrets
-import checks, frog, admin
 import logging
+import random
+import secrets
+from io import BytesIO
+from pathlib import Path
+
+import discord
+from discord.ext import commands
+from dotenv import dotenv_values
+
+from cogs import admin, frog
+from utils import checks
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -17,8 +21,9 @@ TOKEN = dotenv_values('.env')['TOKEN']
 OKA = dotenv_values('.env')['OKA_DISCRIMINATOR']
 PREFIXES = {
     'frog': '~',
-    'ai_rpg': '!',
-    'everything_else': '.'
+    # 'ai_rpg': '!',
+    'everything_else': '.',
+    'thaum rpg': '!thaum '
 }
 
 bot = commands.Bot(command_prefix=PREFIXES.values(), case_insensitive=True)
@@ -46,12 +51,6 @@ async def help(ctx):
 
 # miscellaneous shit
 @bot.command()
-@checks.is_command_for((PREFIXES['frog'], PREFIXES['ai_rpg']))
-async def checkem(ctx):
-    await ctx.send(f'{ctx.prefix} is an allowed prefix')
-
-
-@bot.command()
 @checks.is_command_for((PREFIXES['everything_else']))
 async def qrd(ctx, msg):
     if is_oka(ctx.author.discriminator):
@@ -66,28 +65,15 @@ async def qrd(ctx, msg):
 def is_oka(discriminator):
     return discriminator == OKA
 
-
-
-# @bot.command()
-# @checks.is_command_for((PREFIXES['frog']))
-# @commands.cooldown(1, 30, commands.BucketType.default)
-# async def apu(ctx):
-#     response = frog.get_random_apu()
-#     buffer = BytesIO(response.content)
-#     extension = response.headers['Content-Type'].split('/')[-1]
-#     random_token = secrets.token_urlsafe(16)
-#     filename = '.'.join([random_token, extension])
-#     img_file = discord.File(filename=filename, fp=buffer)
-
-#     await ctx.send(content='', file=img_file,)
-
 @bot.command()
 @checks.is_owner()
 async def me(ctx):
     await ctx.send(f'You: {ctx.message.author.id}')
 
+bot.load_extension('cogs.admin')
+bot.load_extension('cogs.frog')
+bot.load_extension('cogs.speak.speech')
 
-
-bot.add_cog(admin.Admin(bot))
-bot.add_cog(frog.Frog(bot))
+# bot.add_cog(admin.Admin(bot))
+# bot.add_cog(frog.Frog(bot))
 bot.run(TOKEN)
